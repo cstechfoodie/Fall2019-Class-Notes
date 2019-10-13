@@ -26,9 +26,10 @@ def parse_file(file_directory):
 
 def generate_tokens_pipeline(text):
     tokens = nltk.word_tokenize(text)
-    tokens = [token.lower() for token in tokens]
-    wnl = nltk.WordNetLemmatizer()
-    tokens = [wnl.lemmatize(t) for t in tokens]
+    # tokens = [token.lower() for token in tokens]
+    # wnl = nltk.WordNetLemmatizer()
+    # tokens = [wnl.lemmatize(t) for t in tokens]
+    # tokens = [t for t in tokens if t != ' ']
     return tokens
 
 
@@ -84,7 +85,6 @@ def and_query(index_file: str, words: list):
     a = words[0]
     line = f.readline()
     while line != '':
-        print(line.split("="))
         if line.split("=")[0] == a:
             res = line.split("=")[1].split(" ")
             break
@@ -156,16 +156,17 @@ def or_query(index_file: str, words: list):
 
 def merge_blocks(block_files):
     def sorted_as_int(nums):
-        nums = [int(num) for num in nums if len(re.findall(r"\d+", num)) > 0]
+        nums = [int(num) for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
         nums = sorted(nums)
         nums = [str(num) for num in nums]
         return nums
+
     output_file_name = "./index/index{}.txt"
     output_file_count = 0
     f = open(output_file_name.format(output_file_count), "w")
     count = 0
 
-    files = [i for i in range(len(block_files))]
+    files = [i for i in range(len(block_files))]  # [0, 1, 2, ..., 42]
     for file_name in block_files:
         index = int(re.findall(r"\d+", file_name)[0])
         files[index] = open(file_name, "r")
@@ -177,16 +178,17 @@ def merge_blocks(block_files):
         except IndexError:
             continue
         if line == "":
-            files[index].close()
+            files[i].close()
         else:
             if lines.get(line[0], None) is not None:
                 lines[line[0]].append(line[1])
             else:
                 lines[line[0]] = [line[1]]
-    while len(lines.keys()) > 0:
-        token = sorted(lines.keys())[0]
-        postings = [value[1] for value in lines.get(token)]
-        index_lst = [value[0] for value in lines.get(token)]
+
+    while len(lines.keys()) > 0:  # [ key, [index, [value1, value2]] ]
+        token = sorted(lines.keys())[0]  # "a"
+        postings = [value[1] for value in lines.get(token)]  # [[1,4,7], [0,2]]
+        index_lst = [value[0] for value in lines.get(token)]  # [1, 3]
 
         logging.debug("Writing entry to index file:")
         logging.debug("Token: " + str(token))
@@ -199,7 +201,7 @@ def merge_blocks(block_files):
 
         f.write(str(token) + "=" + " ".join(p) + "\n")
         count += 1
-        if count == 2500:
+        if count == 25000:
             f.close()
             output_file_count += 1
             f = open(output_file_name.format(output_file_count), "w")
@@ -219,41 +221,43 @@ def merge_blocks(block_files):
                 else:
                     lines[line[0]] = [line[1]]
     f.close()
+    return int(output_file_count * 25000 + count)
 
 
-# inverted_index = {}
-# ordered_top = {}
-# block_number = 0
-# print(block_number)
-#
-# files = glob.glob("*reut2*.sgm")
-# print(files)
-# for file in files:
-#     docs = parse_file(file)
-#     print(file)
-#     cleaned_docs = clean_source(docs)
-#     counter = 0
-#     for doc_unit in cleaned_docs:
-#         spimi(inverted_index, doc_unit)
-#         counter += 1
-#         if counter == 500:
-#             counter = 0
-#             persist_memory_data_to_csv(inverted_index, "./blocks/block" + str(block_number) + ".txt")
-#             inverted_index = {}
-#             block_number += 1
-#             print(block_number)
+inverted_index = {}
+ordered_top = {}
+block_number = 0
 
-files = glob.glob("./blocks/*.txt")
+files = glob.glob("*reut2*.sgm")
+files.sort()
+print(files)
+for file in files:
+    docs = parse_file(file)
+    print(file)
+    cleaned_docs = clean_source(docs)
+    counter = 0
+    for doc_unit in cleaned_docs:
+        spimi(inverted_index, doc_unit)
+        counter += 1
+        if counter == 500:
+            counter = 0
+            persist_memory_data_to_csv(inverted_index, "./blocks/block" + str(block_number) + ".txt")
+            inverted_index = {}
+            block_number += 1
+            print(block_number)
+
+files = sorted(glob.glob("./blocks/*.txt"))
 print(files)
 print("[INFO] Merging blocks begins")
-merge_blocks(files)
+size = merge_blocks(files)
+print(size)
 print("[INFO] Merging blocks ends")
 
-# query = "5.1 508 absence dasd dassdsdf fdgdfgdf jsahdad adsdkjad"
-# res = and_query("./blocks/block37.txt", generate_tokens_pipeline(query))
+# query = "Varieties"
+# res = and_query("./index/index2.txt", generate_tokens_pipeline(query))
 # print(res)
-
-# query = "gerhard formula promoting"
-# res = or_query("./blocks/block37.txt", sorted(generate_tokens_pipeline(query)))
+#
+# query = "adjusted for adjustment"
+# res = or_query("./blocks/block36.txt", sorted(generate_tokens_pipeline(query)))
 # print(res)
-
+# print(len(res))
