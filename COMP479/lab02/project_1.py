@@ -1,14 +1,24 @@
-import glob
-import sys
-import nltk
-import re
 import collections
+import glob
 import logging
-from nltk.corpus import nps_chat, gutenberg
+import string
 
+import nltk
 from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
+from nltk.stem.porter import *
 
-PARSE_KEY = "reuters"
+DOCUMENT_PARSE_KEY = "reuters"
+
+POSTING_ATTRIBUTE = "newid"
+
+SOURCE_FILE_PATH_REGEX = "*reut2*.sgm"
+BLOCK_FILE_PATH_REGEX = "./blocks/*.txt"
+INDEX_FILE_PATH_TEMPLATE = "./index/index{}.txt"
+BLOCK_FILE_PATH_TEMPLATE = "./blocks/block{}.txt"
+
+INDEX_FILE_SIZE = 25000
+MEMORY_CAPACITY = 500
 
 '''
 parse a single file to return a list of documents at the level of PARSE_KEY
@@ -20,45 +30,56 @@ def parse_file(file_directory):
     data = f.read()
     f.close()
     soup = BeautifulSoup(data, features="html.parser")
-    documents = soup.findAll("reuters")
+    documents = soup.findAll(DOCUMENT_PARSE_KEY)
     return documents
 
 
 def generate_tokens_pipeline(text):
     tokens = nltk.word_tokenize(text)
-    # tokens = [token.lower() for token in tokens]
+    tokens = list(filter(lambda token: token not in string.punctuation, tokens))
+    tokens = list(
+        filter(lambda token: len(re.findall(r"^\d+(\.|,|\d+)*$", token)) == 0, tokens))  # ^\d+(\.|,|\/|\-|\d+)*$
+    tokens = [token.lower() for token in tokens]
+
+    nltk_words = list(stopwords.words('english'))
+    tokens = [token for token in tokens if token not in nltk_words]
+
+    # stemmer = PorterStemmer()
+    # tokens = [stemmer.stem(token) for token in tokens]
+    #
     # wnl = nltk.WordNetLemmatizer()
     # tokens = [wnl.lemmatize(t) for t in tokens]
-    # tokens = [t for t in tokens if t != ' ']
+
+    tokens = [t for t in tokens if t != ' ']
     return tokens
 
 
 def clean_source(documents):
     cleaned_documents = []
     for document in documents:
-        doc_unit = []
-        if document["newid"] is not None:
-            doc_unit.append(document["newid"])
+        single_doc = []
+        if document[POSTING_ATTRIBUTE] is not None:
+            single_doc.append(document[POSTING_ATTRIBUTE])
         else:
-            doc_unit.append(None)
+            single_doc.append(None)
         if document.body is not None:
-            doc_unit.append(generate_tokens_pipeline(document.body.text))
+            single_doc.append(generate_tokens_pipeline(document.body.text))
         else:
-            doc_unit.append("")
-        cleaned_documents.append(doc_unit)
+            single_doc.append("")
+        cleaned_documents.append(single_doc)
     return cleaned_documents
 
 
-def spimi(inverted_index, doc_unit):
-    for token in doc_unit[1]:
+def build_inverted_index_in_memory(inverted_index, single_doc):
+    for token in single_doc[1]:
         if inverted_index.get(token, None) is not None:
-            inverted_index[token].add(str(doc_unit[0]))
+            inverted_index[token].add(str(single_doc[0]))
         else:
-            inverted_index[token] = set([str(doc_unit[0])])
-            inverted_index[token] = set([str(doc_unit[0])])
+            inverted_index[token] = set([str(single_doc[0])])
+            inverted_index[token] = set([str(single_doc[0])])
 
 
-def persist_memory_data_to_csv(inverted_index, f_name):
+def persist_memory_data(inverted_index, f_name):
     f = open(f_name, "w")
     for key in sorted(inverted_index.keys()):
         f.write(key + "=" + " ".join(sorted(inverted_index.get(key))) + "\n")
@@ -71,100 +92,21 @@ def read_line_from_block(block_file_obj, block_number):
     return [key_values_pair[0], [block_number, key_values_pair[1].split(" ")]]
 
 
-def query_parser(query: str):
-    return generate_tokens_pipeline(query)
-
-
-def and_query(index_file: str, words: list):
-    f = open(index_file, "r")
-    res = []
-
-    if len(words) == 0:
-        return res
-
-    a = words[0]
-    line = f.readline()
-    while line != '':
-        if line.split("=")[0] == a:
-            res = line.split("=")[1].split(" ")
-            break
-        else:
-            line = f.readline()
-
-    for i in range(1, len(words)):
-        b_posting = []
-        b = words[i]
-        line = f.readline()
-        while line != '':
-            if line.split("=")[0] == b:
-                b_posting = line.split("=")[1].split(" ")
-                break
-            else:
-                line = f.readline()
-        res = intersection(res, b_posting)
-    f.close()
-    return res
-
-
-def intersection(a, b):
-    res = []
-    i = 0
-    j = 0
-    min_len = min(len(a), len(b))
-    while i < min_len and j < min_len:
-        if int(a[i]) == int(b[i]):
-            res.append(a[i].rstrip("\n"))
-            i += 1
-            j += 1
-        elif int(a[i]) < int(b[i]):
-            i += 1
-        else:
-            j += 1
-    return res
-
-
-def or_query(index_file: str, words: list):
-    f = open(index_file, "r")
-    res = []
-    if len(words) == 0:
-        return res
-    a = words[0]
-    line = f.readline()
-    while line:
-        if line.split("=")[0] == a:
-            res = line.rstrip("\n").split("=")[1].split(" ")
-            break
-        else:
-            line = f.readline()
-
-    for i in range(1, len(words)):
-        b_posting = []
-        b = words[i]
-        line = f.readline()
-        while line:
-            if line.split("=")[0] == b:
-                b_posting = line.rstrip("\n").split("=")[1].split(" ")
-                break
-            else:
-                line = f.readline()
-        res = res + b_posting
-    f.close()
-    c = collections.Counter(res)
-    print(c)
-    return [index_frequency_pair[0] for index_frequency_pair in c.most_common()]
-
-
 def merge_blocks(block_files):
+    global ending_words
+
     def sorted_as_int(nums):
         nums = [int(num) for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
         nums = sorted(nums)
         nums = [str(num) for num in nums]
         return nums
 
-    output_file_name = "./index/index{}.txt"
+    non_positional_postings_size = 0
+
+    output_file_name = INDEX_FILE_PATH_TEMPLATE
     output_file_count = 0
     f = open(output_file_name.format(output_file_count), "w")
-    count = 0
+    count = -1
 
     files = [i for i in range(len(block_files))]  # [0, 1, 2, ..., 42]
     for file_name in block_files:
@@ -186,12 +128,9 @@ def merge_blocks(block_files):
                 lines[line[0]] = [line[1]]
 
     while len(lines.keys()) > 0:  # [ key, [index, [value1, value2]] ]
-        token = sorted(lines.keys())[0]  # "a"
-        postings = [value[1] for value in lines.get(token)]  # [[1,4,7], [0,2]]
-        index_lst = [value[0] for value in lines.get(token)]  # [1, 3]
-
-        logging.debug("Writing entry to index file:")
-        logging.debug("Token: " + str(token))
+        token = sorted(lines.keys())[0]
+        postings = [value[1] for value in lines.get(token)]
+        index_lst = [value[0] for value in lines.get(token)]
 
         p = []
         for posting in postings:
@@ -199,9 +138,14 @@ def merge_blocks(block_files):
 
         p = sorted_as_int(list(set(p)))
 
-        f.write(str(token) + "=" + " ".join(p) + "\n")
-        count += 1
-        if count == 25000:
+        if count == -1:
+            count += 1
+        else:
+            non_positional_postings_size += len(p)
+            count += 1
+            f.write(str(token) + "=" + " ".join(p) + "\n")
+        if count == INDEX_FILE_SIZE:
+            ending_words.append(token)
             f.close()
             output_file_count += 1
             f = open(output_file_name.format(output_file_count), "w")
@@ -221,43 +165,40 @@ def merge_blocks(block_files):
                 else:
                     lines[line[0]] = [line[1]]
     f.close()
-    return int(output_file_count * 25000 + count)
+    return int(output_file_count * INDEX_FILE_SIZE + count), non_positional_postings_size
 
 
-inverted_index = {}
-ordered_top = {}
-block_number = 0
+if __name__ == "__main__":
+    inverted_index_dictionary = {}
+    ordered_top = {}
+    block_number = 0
 
-files = glob.glob("*reut2*.sgm")
-files.sort()
-print(files)
-for file in files:
-    docs = parse_file(file)
-    print(file)
-    cleaned_docs = clean_source(docs)
-    counter = 0
-    for doc_unit in cleaned_docs:
-        spimi(inverted_index, doc_unit)
-        counter += 1
-        if counter == 500:
-            counter = 0
-            persist_memory_data_to_csv(inverted_index, "./blocks/block" + str(block_number) + ".txt")
-            inverted_index = {}
-            block_number += 1
-            print(block_number)
+    files = glob.glob(SOURCE_FILE_PATH_REGEX)
+    files.sort()
+    print("[INFO] SPIMI generating block files begins")
+    for file in files:
+        docs = parse_file(file)
+        cleaned_docs = clean_source(docs)
+        counter = 0
+        for doc_unit in cleaned_docs:
+            build_inverted_index_in_memory(inverted_index_dictionary, doc_unit)
+            counter += 1
+            if counter == MEMORY_CAPACITY:
+                counter = 0
+                persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
+                inverted_index_dictionary = {}
+                block_number += 1
 
-files = sorted(glob.glob("./blocks/*.txt"))
-print(files)
-print("[INFO] Merging blocks begins")
-size = merge_blocks(files)
-print(size)
-print("[INFO] Merging blocks ends")
+    print("[INFO] SPIMI generating block files ends")
+    files = sorted(glob.glob(BLOCK_FILE_PATH_REGEX))
+    print("[INFO] Merging blocks begins")
+    ending_words = []
+    distinct_term_size, non_positional_postings_size = merge_blocks(files)
+    print("[INFO] Total number of distinct_term is: ", distinct_term_size)
+    print("[INFO] Total number of non_positional_postings is: ", non_positional_postings_size)
+    print("[INFO] Ending words for each index file: ", ending_words)
+    print("[INFO] Merging blocks ends")
 
-# query = "Varieties"
-# res = and_query("./index/index2.txt", generate_tokens_pipeline(query))
-# print(res)
-#
-# query = "adjusted for adjustment"
-# res = or_query("./blocks/block36.txt", sorted(generate_tokens_pipeline(query)))
-# print(res)
-# print(len(res))
+    f = open("spliting_word.txt", "w")
+    f.write(' '.join(ending_words))
+    f.close()
