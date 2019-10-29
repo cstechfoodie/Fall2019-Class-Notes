@@ -1,6 +1,4 @@
-import collections
 import glob
-import logging
 import string
 
 import nltk
@@ -188,6 +186,7 @@ if __name__ == "__main__":
                 persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
                 inverted_index_dictionary = {}
                 block_number += 1
+        persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
 
     print("[INFO] SPIMI generating block files ends")
     files = sorted(glob.glob(BLOCK_FILE_PATH_REGEX))

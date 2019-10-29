@@ -95,13 +95,14 @@ def or_query_resolver(index_files: str, words: list, splits: list, verbose=False
     while line:
         if line.split("=")[0] == a:
             res = line.rstrip("\n").split("=")[1].split(" ")
+            if verbose:
+                print("index: 0", line)
             break
         elif line > a:
             break
         else:
             line = f.readline().strip("\n")
-    if verbose:
-        print("index: 0", line)
+
     for i in range(1, len(words)):
         b_posting = []
         b = words[i]
