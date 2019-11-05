@@ -34,7 +34,7 @@ def and_query_resolver(index_files: str, words: list, splits: list, verbose=Fals
         if line.split("=")[0] == a:
             res = line.split("=")[1].split(" ")
             break
-        elif line > a:
+        elif line.split("=")[0] > a:
             break
         else:
             line = f.readline().strip("\n")
@@ -50,7 +50,7 @@ def and_query_resolver(index_files: str, words: list, splits: list, verbose=Fals
                 if verbose:
                     print("index:", i, line)
                 break
-            elif line > b:
+            elif line.split("=")[0] > b:
                 break
             else:
                 line = f.readline().strip("\n")
@@ -98,7 +98,7 @@ def or_query_resolver(index_files: str, words: list, splits: list, verbose=False
             if verbose:
                 print("index: 0", line)
             break
-        elif line > a:
+        elif line.split("=")[0] > a:
             break
         else:
             line = f.readline().strip("\n")
@@ -113,7 +113,7 @@ def or_query_resolver(index_files: str, words: list, splits: list, verbose=False
                 if verbose:
                     print("index:", i, line)
                 break
-            elif line > b:
+            elif line.split("=")[0] > b:
                 break
             else:
                 line = f.readline().strip("\n")

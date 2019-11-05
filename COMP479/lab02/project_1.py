@@ -10,7 +10,7 @@ DOCUMENT_PARSE_KEY = "reuters"
 
 POSTING_ATTRIBUTE = "newid"
 
-SOURCE_FILE_PATH_REGEX = "*reut2*.sgm"
+SOURCE_FILE_PATH_REGEX = "./reuters/*reut2*.sgm"
 BLOCK_FILE_PATH_REGEX = "./blocks/*.txt"
 INDEX_FILE_PATH_TEMPLATE = "./index/index{}.txt"
 BLOCK_FILE_PATH_TEMPLATE = "./blocks/block{}.txt"
@@ -36,7 +36,7 @@ def generate_tokens_pipeline(text):
     tokens = nltk.word_tokenize(text)
     tokens = list(filter(lambda token: token not in string.punctuation, tokens))
     tokens = list(
-        filter(lambda token: len(re.findall(r"^\d+(\.|,|\d+)*$", token)) == 0, tokens))  # ^\d+(\.|,|\/|\-|\d+)*$
+        filter(lambda token: len(re.findall(r"^\d+(\.|,|\/|\-|\d+)*$", token)) == 0, tokens))  # ^\d+(\.|,|\/|\-|\d+)*$
     tokens = [token.lower() for token in tokens]
 
     nltk_words = list(stopwords.words('english'))
