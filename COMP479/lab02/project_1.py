@@ -52,7 +52,7 @@ def generate_tokens_pipeline(text):
     return tokens
 
 
-def clean_source(documents):
+def clean_source(documents, total_document_length):
     cleaned_documents = []
     for document in documents:
         single_doc = []
@@ -61,11 +61,13 @@ def clean_source(documents):
         else:
             single_doc.append(None)
         if document.body is not None:
-            single_doc.append(generate_tokens_pipeline(document.body.text))
+            tokens = generate_tokens_pipeline(document.body.text)
+            total_document_length += len(tokens)
+            single_doc.append(tokens)
         else:
             single_doc.append("")
         cleaned_documents.append(single_doc)
-    return cleaned_documents
+    return cleaned_documents, total_document_length
 
 
 def build_inverted_index_in_memory(inverted_index, single_doc):
@@ -170,13 +172,15 @@ if __name__ == "__main__":
     inverted_index_dictionary = {}
     ordered_top = {}
     block_number = 0
+    total_document_length = 0
 
     files = glob.glob(SOURCE_FILE_PATH_REGEX)
     files.sort()
     print("[INFO] SPIMI generating block files begins")
     for file in files:
         docs = parse_file(file)
-        cleaned_docs = clean_source(docs)
+        cleaned_docs, total_document_length = clean_source(docs, total_document_length)
+        print(total_document_length)
         counter = 0
         for doc_unit in cleaned_docs:
             build_inverted_index_in_memory(inverted_index_dictionary, doc_unit)
@@ -199,5 +203,9 @@ if __name__ == "__main__":
     print("[INFO] Merging blocks ends")
 
     f = open("spliting_word.txt", "w")
-    f.write(' '.join(ending_words))
+    f.write(' '.join(ending_words) + "\n")
+    docs_num = block_number * MEMORY_CAPACITY + counter
+    l_avg = round(total_document_length / docs_num)
+    f.write("docs_num="+str(docs_num)+"\n")
+    f.write("l_avg="+str(l_avg)+"\n")
     f.close()

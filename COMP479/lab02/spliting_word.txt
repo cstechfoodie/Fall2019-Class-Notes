@@ -1,1 +1,3 @@
 loan-rate
+docs_num=21578
+l_avg=75

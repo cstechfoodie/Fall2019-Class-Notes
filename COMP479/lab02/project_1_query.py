@@ -3,6 +3,9 @@ import glob
 import sys
 from project_1 import generate_tokens_pipeline
 
+K = 0
+b = 0.5
+
 
 def query_parser(query: str):
     return sorted(generate_tokens_pipeline(query))
