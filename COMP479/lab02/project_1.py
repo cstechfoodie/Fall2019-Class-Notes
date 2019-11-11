@@ -5,6 +5,7 @@ import nltk
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
+import collections
 
 DOCUMENT_PARSE_KEY = "reuters"
 
@@ -71,18 +72,37 @@ def clean_source(documents, total_document_length):
 
 
 def build_inverted_index_in_memory(inverted_index, single_doc):
-    for token in single_doc[1]:
+    counter = collections.Counter(single_doc[1])
+    for token in counter.keys():
         if inverted_index.get(token, None) is not None:
-            inverted_index[token].add(str(single_doc[0]))
+            inverted_index[token].add(
+                "~".join(
+                    [
+                        str(single_doc[0]),
+                        str(len(single_doc[1])),
+                        str(counter[token])
+                    ]
+                )
+            )  # id, doc_len, count
         else:
-            inverted_index[token] = set([str(single_doc[0])])
-            inverted_index[token] = set([str(single_doc[0])])
+            inverted_index[token] = set(
+                [
+                    "~".join(
+                        [
+                            str(single_doc[0]),
+                            str(len(single_doc[1])),
+                            str(counter[token])
+                        ]
+                    )
+                ]
+            )
 
 
 def persist_memory_data(inverted_index, f_name):
     f = open(f_name, "w")
     for key in sorted(inverted_index.keys()):
-        f.write(key + "=" + " ".join(sorted(inverted_index.get(key))) + "\n")
+        f.write(key + "=" + " ".join(
+            sorted(inverted_index.get(key), key=lambda combo: int(combo.split("~")[0]))) + "\n")
     f.close()
 
 
@@ -96,9 +116,8 @@ def merge_blocks(block_files):
     global ending_words
 
     def sorted_as_int(nums):
-        nums = [int(num) for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
-        nums = sorted(nums)
-        nums = [str(num) for num in nums]
+        nums = [num for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
+        nums = sorted(nums, key=lambda combo: int(combo.split("~")[0]))  # sort by the docId
         return nums
 
     non_positional_postings_size = 0
@@ -180,7 +199,6 @@ if __name__ == "__main__":
     for file in files:
         docs = parse_file(file)
         cleaned_docs, total_document_length = clean_source(docs, total_document_length)
-        print(total_document_length)
         counter = 0
         for doc_unit in cleaned_docs:
             build_inverted_index_in_memory(inverted_index_dictionary, doc_unit)
@@ -206,6 +224,6 @@ if __name__ == "__main__":
     f.write(' '.join(ending_words) + "\n")
     docs_num = block_number * MEMORY_CAPACITY + counter
     l_avg = round(total_document_length / docs_num)
-    f.write("docs_num="+str(docs_num)+"\n")
-    f.write("l_avg="+str(l_avg)+"\n")
+    f.write("docs_num=" + str(docs_num) + "\n")
+    f.write("l_avg=" + str(l_avg) + "\n")
     f.close()

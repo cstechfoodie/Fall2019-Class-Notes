@@ -2,8 +2,9 @@ import collections
 import glob
 import sys
 from project_1 import generate_tokens_pipeline
+import math
 
-K = 0
+K = 1
 b = 0.5
 
 
@@ -138,6 +139,83 @@ def or_query_resolver(index_files: str, words: list, splits: list, verbose=False
     return [index_frequency_pair[0] for index_frequency_pair in c.most_common()]
 
 
+def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l_avg, verbose=False):
+    res = []
+    if len(words) == 0:
+        return res
+    a = words[0]
+    file_index = find_file_index(splits, a)
+    f = open(index_files[file_index], "r")
+    line = f.readline().strip("\n")
+    while line:
+        if line.split("=")[0] == a:
+            res.append(line.rstrip("\n").split("=")[1].split(" "))
+            if verbose:
+                print("index: 0", line)
+            break
+        elif line.split("=")[0] > a:
+            break
+        else:
+            line = f.readline().strip("\n")
+
+    for i in range(1, len(words)):
+        b_posting = []
+        b = words[i]
+        line = f.readline().strip("\n")
+        while line:
+            if line.split("=")[0] == b:
+                b_posting = line.rstrip("\n").split("=")[1].split(" ")
+                if verbose:
+                    print("index:", i, line)
+                break
+            elif line.split("=")[0] > b:
+                break
+            else:
+                line = f.readline().strip("\n")
+                if line == '':
+                    f.close()
+                    next_file_index = find_file_index(splits, b)
+                    if file_index == next_file_index:
+                        print("[INFO] No postings for ", b)
+                        b_posting = []
+                        break
+                    f = open(index_files[next_file_index], "r")
+                    line = f.readline().strip("\n")
+                    file_index = next_file_index
+        res.append(b_posting)
+    f.close()
+    res = rank_documents(res, N, l_avg, verbose)
+    return res
+
+
+def calculate_score(ld, tf, N, df, l_avg):
+    #print(ld, tf, N, df, l_avg)
+    return math.log(N /df) \
+           * (
+                   (K + 1) * tf /
+                   (
+                           K * ((1 - b) + b * (ld / l_avg)) + tf
+                   )
+           )
+
+
+def rank_documents(postings, N, l_avg, verbose):  # [['3978~337~1'], ['14342~229~1']]
+    res = {}
+    for posting in postings:  # ['3978~337~1', '3978~337~1']
+        for combo in posting:  # '3978~337~1'
+            id, ld, tf = [int(x) for x in combo.strip("\n").split("~")]
+            df = len(posting)
+            score = calculate_score(ld, tf, N, df, l_avg)
+            if res.get(id, None) is not None:
+                res[id] = res[id] + score
+            else:
+                res[id] = score
+    sorted_res = sorted(res.items(), key=lambda kv: kv[1], reverse=True)
+    if verbose:
+        print("Document rank score: ", sorted_res)
+    return [item[0] for item in sorted_res]
+
+
 def help():
     print("[Usage] python3 project_1_query.py -[mode] [query:string] -[v:verbose]")
 
@@ -145,6 +223,9 @@ def help():
 if __name__ == "__main__":
     f = open("spliting_word.txt", "r")
     spliting_words = f.readline().strip("\n").split(" ")
+    N = int(f.readline().strip("\n").split("=")[1])
+    l_avg = int(f.readline().strip("\n").split("=")[1])
+    print("N ", N, "l_avg ", l_avg)
     f.close()
     print("[INFO] Spliting_words: ", spliting_words)
     print("[INFO] System arguments: ", sys.argv)
@@ -168,9 +249,15 @@ if __name__ == "__main__":
     if mode == "-a":
         res = and_query_resolver(files, query, spliting_words, verbose)
         print("[INFO]----Results------", res)
+        print("[INFO]----Total Count------", len(res))
     elif mode == "-o":
         res = or_query_resolver(files, query, spliting_words, verbose)
         print("[INFO]----Results------", res)
+        print("[INFO]----Total Count------", len(res))
+    elif mode == "-r":
+        res = retrieve_documents_by_rank(files, query, spliting_words, N, l_avg, verbose)
+        print("[INFO]----Results------", res)
+        print("[INFO]----Total Count------", len(res))
     else:
         print("[ERROR] missing boolean operator '-a' '-o'")
         help()
