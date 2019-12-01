@@ -7,37 +7,16 @@ from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
 import collections
-import subprocess
-
-# files = [os.path.join(path, name) for path, subdirs, files in os.walk(root) for name in files]
-# process = subprocess.Popen(['python3', 'project_1.py', files],
-#                            stdout=subprocess.PIPE,
-#                            universal_newlines=True)
-# while True:
-#     output = process.stdout.readline()
-#     print(output.strip())
-#     # Do something else
-#     return_code = process.poll()
-#     if return_code is not None:
-#         print('RETURN CODE', return_code)
-#         # Process has finished, read rest of the output
-#         for output in process.stdout.readlines():
-#             print(output.strip())
-#         break
-
 
 ROOT = "/Users/c5277994/Documents/Fall2019-Class-Notes/COMP479/crawl/AIConcordia/www.concordia.ca"
 DOCUMENT_PARSE_KEY = "html"
 
-POSTING_ATTRIBUTE = "newid"
+BLOCK_FILE_PATH_REGEX = "./ConcordiaResearchBlocks/*.txt"
+INDEX_FILE_PATH_TEMPLATE = "./ConcordiaResearchIndex/index{}.txt"
+BLOCK_FILE_PATH_TEMPLATE = "./ConcordiaResearchBlocks/block{}.txt"
 
-SOURCE_FILE_PATH_REGEX = "./reuters/*reut2*.sgm"
-BLOCK_FILE_PATH_REGEX = "./blocks/*.txt"
-INDEX_FILE_PATH_TEMPLATE = "./index/index{}.txt"
-BLOCK_FILE_PATH_TEMPLATE = "./blocks/block{}.txt"
-
-INDEX_FILE_SIZE = 25000
-MEMORY_CAPACITY = 500
+INDEX_FILE_SIZE = 250000
+MEMORY_CAPACITY = 5000
 
 '''
 parse a single file to return a list of documents at the level of PARSE_KEY
@@ -50,9 +29,12 @@ def parse_file(file_directory):
     f.close()
     soup = BeautifulSoup(data, features="html.parser")
     [x.extract() for x in soup.findAll('script')]
-    documents1 = soup.body.text
-    document = soup.findAll(DOCUMENT_PARSE_KEY)[0]
-    return document
+    try:
+        document = soup.findAll(DOCUMENT_PARSE_KEY)[0].body.text
+        return document
+    except IndexError:
+        return None
+
 
 
 def generate_tokens_pipeline(text):
@@ -75,22 +57,19 @@ def generate_tokens_pipeline(text):
     return tokens
 
 
-def clean_source(documents, total_document_length):
-    cleaned_documents = []
-    for document in documents:
-        single_doc = []
-        if document[POSTING_ATTRIBUTE] is not None:
-            single_doc.append(document[POSTING_ATTRIBUTE])
-        else:
-            single_doc.append(None)
-        if document.body is not None:
-            tokens = generate_tokens_pipeline(document.body.text)
-            total_document_length += len(tokens)
-            single_doc.append(tokens)
-        else:
-            single_doc.append("")
-        cleaned_documents.append(single_doc)
-    return cleaned_documents, total_document_length
+def clean_source(url, document, total_document_length):
+    single_doc = []
+    if url is not None:
+        single_doc.append(url)
+    else:
+        single_doc.append(None)
+    if document is not None:
+        tokens = generate_tokens_pipeline(document)
+        total_document_length += len(tokens)
+        single_doc.append(tokens)
+    else:
+        single_doc.append("")
+    return single_doc, total_document_length
 
 
 def build_inverted_index_in_memory(inverted_index, single_doc):
@@ -105,7 +84,7 @@ def build_inverted_index_in_memory(inverted_index, single_doc):
                         str(counter[token])
                     ]
                 )
-            )  # id, doc_len, count
+            )  # url, doc_len, count
         else:
             inverted_index[token] = set(
                 [
@@ -124,14 +103,15 @@ def persist_memory_data(inverted_index, f_name):
     f = open(f_name, "w")
     for key in sorted(inverted_index.keys()):
         f.write(key + "=" + " ".join(
-            sorted(inverted_index.get(key), key=lambda combo: int(combo.split("~")[0]))) + "\n")
+            sorted(inverted_index.get(key), key=lambda combo: combo.split("~")[0])) + "\n")
     f.close()
 
 
 def read_line_from_block(block_file_obj, block_number):
     top_line = block_file_obj.readline()
     key_values_pair = top_line.rstrip("\n").split("=")
-    return [key_values_pair[0], [block_number, key_values_pair[1].split(" ")]]
+    return [key_values_pair[0],
+            [block_number, key_values_pair[1].split(" ")]]  # [url, [block_number, [combo1, combo2, combo3....]]]
 
 
 def merge_blocks(block_files):
@@ -147,7 +127,7 @@ def merge_blocks(block_files):
     output_file_name = INDEX_FILE_PATH_TEMPLATE
     output_file_count = 0
     f = open(output_file_name.format(output_file_count), "w")
-    count = -1
+    count = 0
 
     files = [i for i in range(len(block_files))]  # [0, 1, 2, ..., 42]
     for file_name in block_files:
@@ -177,14 +157,11 @@ def merge_blocks(block_files):
         for posting in postings:
             p.extend(posting)
 
-        p = sorted_as_int(list(set(p)))
+        # p = sorted_as_int(list(set(p)))
 
-        if count == -1:
-            count += 1
-        else:
-            non_positional_postings_size += len(p)
-            count += 1
-            f.write(str(token) + "=" + " ".join(p) + "\n")
+        non_positional_postings_size += len(p)
+        count += 1
+        f.write(str(token) + "=" + " ".join(p) + "\n")
         if count == INDEX_FILE_SIZE:
             ending_words.append(token)
             f.close()
@@ -215,26 +192,27 @@ if __name__ == "__main__":
     block_number = 0
     total_document_length = 0
 
-    files = [os.path.join(path, name) for path, subdirs, files in os.walk(ROOT) for name in files][0:10]
+    files = [os.path.join(path, name) for path, subdirs, files in os.walk(ROOT) for name in files]
 
-    total_document_length = len(files)
     print("[INFO] SPIMI generating block files begins")
+    counter = 0
     for file in files:
-        docs = parse_file(file)
-        cleaned_docs, total_document_length = clean_source(docs, total_document_length)
-        counter = 0
-        for doc_unit in cleaned_docs:
-            build_inverted_index_in_memory(inverted_index_dictionary, doc_unit)
-            counter += 1
-            if counter == MEMORY_CAPACITY:
-                counter = 0
-                persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
-                inverted_index_dictionary = {}
-                block_number += 1
+        doc = parse_file(file)
+        if file.find(DOCUMENT_PARSE_KEY) < 0 or not doc:
+            continue
+        cleaned_doc, total_document_length = clean_source(file, doc, total_document_length)
+
+        build_inverted_index_in_memory(inverted_index_dictionary, cleaned_doc)
+        counter += 1
+        if counter == MEMORY_CAPACITY:
+            counter = 0
+            inverted_index_dictionary = {}
+            block_number += 1
         persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
+    persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
 
     print("[INFO] SPIMI generating block files ends")
-    files = sorted(glob.glob(BLOCK_FILE_PATH_REGEX))
+    files = sorted(glob.glob(BLOCK_FILE_PATH_REGEX), key=lambda file_name: int(re.findall(r"\d+", file_name)[0]))
     print("[INFO] Merging blocks begins")
     ending_words = []
     distinct_term_size, non_positional_postings_size = merge_blocks(files)
