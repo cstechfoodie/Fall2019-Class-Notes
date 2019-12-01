@@ -1,0 +1,20 @@
+{
+    "name": "Concordia University",
+    "short_name": "Concordia",
+    "icons": [
+        {
+            "src": "/etc/designs/concordia/clientlibs/img/favicons/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/etc/designs/concordia/clientlibs/img/favicons/android-chrome-256x256.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/",
+    "theme_color": "#932439",
+    "background_color": "#ffffff",
+    "display": "standalone"
+}

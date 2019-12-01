@@ -1,0 +1,3 @@
+#boot .youtube{width:100%;margin:0 auto 15px auto}
+#boot .youtube .video-container{width:100%;margin:0 auto;position:relative;padding-bottom:56.25%;padding-top:0;height:0;overflow:hidden}
+#boot .youtube .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%}

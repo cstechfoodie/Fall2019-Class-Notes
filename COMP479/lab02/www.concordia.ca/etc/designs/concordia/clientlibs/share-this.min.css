@@ -1,0 +1,25 @@
+#boot .c-socialbar-cta{position:absolute;top:0;width:31px;padding:6px 0 4px 0;background:#c8c8c8;border:1px solid #c8c8c8;text-align:center;-webkit-box-shadow:0 0 10px #fff;-moz-box-shadow:0 0 10px #fff;box-shadow:0 0 10px #fff;color:0 0 10px #fff}
+#boot .c-socialbar-cta.fixed{position:fixed;top:130px}
+#boot .c-socialbar-cta ul,#boot .c-socialbar-cta li{padding:0;margin:0;list-style:none}
+#boot .c-socialbar-cta li{margin:0 4px}
+#boot .c-socialbar-cta a{display:block;color:#fff;padding:4px 2px;margin:0;text-decoration:none}
+#boot .c-socialbar-cta a span{text-indent:-9999px}
+#boot .c-socialbar-cta hr{padding:0;margin:0 4px;border-top:0;border-color:#eee}
+#boot .c-socialbar-cta a.st_facebook_custom:hover span.sprites-icon-social-1d{background-position:-118px -72px}
+#boot .c-socialbar-cta a.st_twitter_custom:hover span.sprites-icon-social-2{background-position:-93px -74px}
+#boot .c-socialbar-cta a.st_linkedin_custom:hover span.sprites-icon-social-3d{background-position:-65px -74px}
+#boot .c-socialbar-cta a.st_google_custom:hover span.sprites-icon-social-3{background-position:-42px -87px}
+#boot .c-socialbar-cta.horizontal{overflow:hidden;position:relative;top:auto;width:auto;display:inline-block;margin:0 0 15px;padding:0;height:44px}
+#boot .c-socialbar-cta.horizontal ul{display:inline-block;float:left}
+#boot .c-socialbar-cta.horizontal li{display:inline-block;float:left;margin:4px 0;border-top:0}
+#boot .c-socialbar-cta.horizontal li+li{border-left:1px solid #a84f60}
+#boot .c-socialbar-cta.horizontal a{display:inline-block;width:44px;text-align:center;margin:0;padding:8px 0}
+#boot .c-socialbar-cta.horizontal hr{float:left;height:36px;width:1px;border-right:1px solid #c9919c;margin:4px 0}
+@media(max-width:1060px){#boot .c-socialbar-cta{display:none !important}
+}
+@media(min-width:769px){#boot .c-socialbar-cta{display:none}
+#boot .c-socialbar-cta.horizontal{display:none}
+}
+@media(max-width:768px){#boot .c-socialbar-cta{display:none !important}
+#boot .c-socialbar-cta.horizontal{display:inline-block}
+}

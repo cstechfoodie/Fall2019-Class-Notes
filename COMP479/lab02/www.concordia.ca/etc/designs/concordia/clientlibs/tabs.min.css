@@ -1,0 +1,16 @@
+#boot .c-tabs ul.nav-tabs{width:100%}
+#boot .c-tabs ul.nav-tabs li a{padding:12px 0 15px 0}
+@media(max-width:768px){#boot .accordion .accordion-inner{padding:10px 10px}
+#boot .accordion .accordion-group{border:1px solid #e5e5e5;display:block;overflow:hidden;margin-bottom:3px;border-radius:0;-webkit-transition:height .3s;-moz-transition:height .3s;-o-transition:height .3s;-transition:height .3s}
+#boot .accordion .accordion-group .accordion-heading{position:relative;text-transform:none;height:49px}
+#boot .accordion .accordion-group .accordion-heading a{display:block;width:100%;padding:0 10px;border-bottom:1px solid #e5e5e5;font:bold 13px/48px 'Arial';color:#555}
+#boot .accordion .accordion-group .accordion-heading a:after{background-image:none}
+#boot .accordion .accordion-group .accordion-heading a:hover{background-color:#ebebeb}
+#boot .accordion .accordion-group .accordion-heading .arrow{display:block;position:absolute;top:20px;right:10px;background-image:url(https://www.concordia.ca/etc/designs/concordia/clientlibs/img/sprites.png);background-repeat:no-repeat;background-position:-178px -37px;width:18px;height:10px;cursor:pointer;-webkit-transition:all .3s ease-in-out;-moz-transition:all .3s ease-in-out;-o-transition:all .3s ease-in-out;-ms-transition:all .3s ease-in-out;transition:all .3s ease-in-out}
+#boot .accordion .accordion-group ul{margin:0;padding-left:10px}
+#boot .accordion .accordion-group ul li{min-height:30px}
+#boot .accordion .accordion-group.active-accordion .accordion-heading a{background-color:#ebebeb}
+#boot .accordion .accordion-group.active-accordion .accordion-heading .arrow{-webkit-transform:rotate(-180deg);-moz-transform:rotate(-180deg);-o-transform:rotate(-180deg);-ms-transform:rotate(-180deg);transform:rotate(-180deg)}
+#boot .accordion .accordion-group img{padding:10px}
+#boot .accordion .accordion-group .btn{margin:5px 14px 20px 0}
+}

@@ -1,0 +1,5 @@
+#boot .status-bar .alert-green{background:#abd8a3;color:black}
+#boot .status-bar .alert-blue{background:#0072a8;color:white}
+#boot .status-bar .alert-yellow{background:#ffef74;color:black}
+#boot .status-bar .alert-red{background:#cd090a;color:white}
+#boot .status-bar a{color:inherit}

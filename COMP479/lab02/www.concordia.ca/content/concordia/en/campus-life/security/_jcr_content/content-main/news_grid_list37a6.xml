@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Concordia News</title>
+        <link>http://www.concordia.ca/news</link>
+        <description>Security RSS Feed</description>
+        <atom:link href="https://www.concordia.ca/content/concordia/en/campus-life/security/_jcr_content/content-main/news_grid_list.xml" rel="self" type="application/rss+xml"/>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/iits/security-team-shares-basics-of-theft-prevention.html</guid>
+    	    <title>3 theft-prevention tips for your finals</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/iits/security-team-shares-basics-of-theft-prevention.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="3 theft-prevention tips for your finals" width="303" height="242" alt="3 theft-prevention tips for your finals" src="http://www.concordia.ca/content/shared/en/news/main/stories/iits/security-team-shares-basics-of-theft-prevention.img.png/1553875977141.jpg" /><p>Because now is really not the time to lose a laptop</p>
+    	    ]]>
+    	    </description>
+	    </item>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/2018/11/01/concordias-services-sector-wants-to-hear-from-you.html</guid>
+    	    <title>Concordia’s Services Sector wants to hear from you</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/2018/11/01/concordias-services-sector-wants-to-hear-from-you.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="Concordia’s Services Sector wants to hear from you" width="303" height="242" alt="Concordia’s Services Sector wants to hear from you" src="http://www.concordia.ca/content/shared/en/news/main/stories/2018/11/01/concordias-services-sector-wants-to-hear-from-you.img.png/1541102357721.jpg" /><p>On November 12 and 14, speak up at the annual We’re Listening Series</p>
+    	    ]]>
+    	    </description>
+	    </item>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/2018/09/25/are-you-prepared-for-campus-safety-awareness-week.html</guid>
+    	    <title>Are you prepared for Campus Safety Awareness Week?</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/2018/09/25/are-you-prepared-for-campus-safety-awareness-week.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="Are you prepared for Campus Safety Awareness Week?" width="303" height="242" alt="Are you prepared for Campus Safety Awareness Week?" src="http://www.concordia.ca/content/shared/en/news/main/stories/2018/09/25/are-you-prepared-for-campus-safety-awareness-week.img.png/1537801418870.jpg" /><p>October 2 to 5: Get training, complete challenges and win prizes!</p>
+    	    ]]>
+    	    </description>
+	    </item>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/2018/04/24/concordia-bike-sweep-is-back.html</guid>
+    	    <title>Concordia’s bike sweep returns</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/2018/04/24/concordia-bike-sweep-is-back.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="Concordia’s bike sweep returns" width="303" height="242" alt="Concordia’s bike sweep returns" src="http://www.concordia.ca/content/shared/en/news/main/stories/2018/04/24/concordia-bike-sweep-is-back.img.png/1524601888963.jpg" /><p>Abandoned bicycles will be removed May 15</p>
+    	    ]]>
+    	    </description>
+	    </item>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/2017/11/13/public-safety-alert.html</guid>
+    	    <title>Public safety alert</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/2017/11/13/public-safety-alert.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="Public safety alert" width="303" height="242" alt="Public safety alert" src="http://www.concordia.ca/content/shared/en/news/main/stories/2017/11/13/public-safety-alert.img.png/1510612516573.jpg" /><p>Social media campaign targets women students</p>
+    	    ]]>
+    	    </description>
+	    </item>
+        <item>
+    	    <guid>http://www.concordia.ca/content/shared/en/news/main/stories/2017/09/19/campus-safety-awareness-week-at-concordia.html</guid>
+    	    <title>Are you prepared for Campus Safety Awareness Week at Concordia?</title>
+    	    <link>http://www.concordia.ca/content/shared/en/news/main/stories/2017/09/19/campus-safety-awareness-week-at-concordia.html</link>
+    	    <description>
+            <![CDATA[
+                <img title="Are you prepared for Campus Safety Awareness Week at Concordia?" width="303" height="242" alt="Are you prepared for Campus Safety Awareness Week at Concordia?" src="http://www.concordia.ca/content/shared/en/news/main/stories/2017/09/19/campus-safety-awareness-week-at-concordia.img.png/1505918947356.jpg" /><p>SEPT. 25-29: Get training, try the obstacle course and win prizes!</p>
+    	    ]]>
+    	    </description>
+	    </item>
+    </channel>
+</rss>
