@@ -1,14 +1,33 @@
+import os
 import glob
 import string
-import os
 
 import nltk
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
 import collections
+import subprocess
 
-DOCUMENT_PARSE_KEY = "reuters"
+# files = [os.path.join(path, name) for path, subdirs, files in os.walk(root) for name in files]
+# process = subprocess.Popen(['python3', 'project_1.py', files],
+#                            stdout=subprocess.PIPE,
+#                            universal_newlines=True)
+# while True:
+#     output = process.stdout.readline()
+#     print(output.strip())
+#     # Do something else
+#     return_code = process.poll()
+#     if return_code is not None:
+#         print('RETURN CODE', return_code)
+#         # Process has finished, read rest of the output
+#         for output in process.stdout.readlines():
+#             print(output.strip())
+#         break
+
+
+ROOT = "/Users/c5277994/Documents/Fall2019-Class-Notes/COMP479/crawl/AIConcordia/www.concordia.ca"
+DOCUMENT_PARSE_KEY = "html"
 
 POSTING_ATTRIBUTE = "newid"
 
@@ -30,8 +49,10 @@ def parse_file(file_directory):
     data = f.read()
     f.close()
     soup = BeautifulSoup(data, features="html.parser")
-    documents = soup.findAll(DOCUMENT_PARSE_KEY)
-    return documents
+    [x.extract() for x in soup.findAll('script')]
+    documents1 = soup.body.text
+    document = soup.findAll(DOCUMENT_PARSE_KEY)[0]
+    return document
 
 
 def generate_tokens_pipeline(text):
@@ -194,8 +215,9 @@ if __name__ == "__main__":
     block_number = 0
     total_document_length = 0
 
-    files = glob.glob(SOURCE_FILE_PATH_REGEX)
-    files.sort()
+    files = [os.path.join(path, name) for path, subdirs, files in os.walk(ROOT) for name in files][0:10]
+
+    total_document_length = len(files)
     print("[INFO] SPIMI generating block files begins")
     for file in files:
         docs = parse_file(file)

@@ -1,0 +1,11 @@
+PING python.org (45.55.99.72): 56 data bytes
+64 bytes from 45.55.99.72: icmp_seq=0 ttl=54 time=23.483 ms
+64 bytes from 45.55.99.72: icmp_seq=1 ttl=54 time=22.848 ms
+64 bytes from 45.55.99.72: icmp_seq=2 ttl=54 time=23.942 ms
+64 bytes from 45.55.99.72: icmp_seq=3 ttl=54 time=23.341 ms
+
+--- python.org ping statistics ---
+4 packets transmitted, 4 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 22.848/23.404/23.942/0.390 ms
+
+RETURN CODE 0
