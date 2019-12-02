@@ -6,6 +6,7 @@ import re
 
 K = 1
 b = 0.5
+top = 0
 
 
 def query_parser(query: str):
@@ -25,7 +26,7 @@ def find_file_index(spliting_words, term):
     return len(spliting_words)
 
 
-def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l_avg, verbose=False, mode="-rbm"):
+def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l_avg, verbose=False, mode="-rbm25"):
     res = []
     if len(words) == 0:
         return res
@@ -97,11 +98,11 @@ def rank_documents(postings, N, l_avg, verbose, mode):  # [['url~337~1'], ['url~
     res = {}
     for posting in postings:  # ['url~337~1', 'url~337~1']
         for combo in posting:  # 'url~337~1'
-            url, ld, tf = [x for x in combo.strip("\n").split("~")] # [url, 337, 1]
+            url, ld, tf = [x for x in combo.strip("\n").split("~")]  # [url, 337, 1]
             ld = int(ld)
             tf = int(tf)
             df = len(posting)
-            if mode == "-rbm":
+            if mode == "-rbm25":
                 score = calculate_score_bm25(ld, tf, N, df, l_avg)
             else:
                 score = calculate_score_tf_idf(tf, N, df)
@@ -111,7 +112,10 @@ def rank_documents(postings, N, l_avg, verbose, mode):  # [['url~337~1'], ['url~
                 res[url] = score
     sorted_res = sorted(res.items(), key=lambda kv: kv[1], reverse=True)
     if verbose:
-        print("Document rank score: ", sorted_res)
+        print("[INFO] URL rank scores: ", sorted_res, "\n")
+        print('\n')
+        if top > 0:
+            print("[INFO] Top " + top + " URL rank scores: ", sorted_res)
     return [item[0] for item in sorted_res]
 
 
@@ -126,7 +130,6 @@ if __name__ == "__main__":
     l_avg = int(f.readline().strip("\n").split("=")[1])
     print("N ", N, "l_avg ", l_avg)
     f.close()
-    print("[INFO] Spliting_words: ", spliting_words)
     print("[INFO] System arguments: ", sys.argv)
 
     files = sorted(glob.glob("./ConcordiaResearchIndex/*.txt"),
@@ -146,14 +149,27 @@ if __name__ == "__main__":
         help()
         sys.exit(1)
 
-    if mode == "-rbm":
+    if mode == "-rbm25":
         res = retrieve_documents_by_rank(files, query, spliting_words, N, l_avg, verbose, mode)
-        print("[INFO]----Results------", res)
-        print("[INFO]----Total Count------", len(res))
-    elif mode == "-rtf":
+        print("[INFO]----------------------------ALL Retrieved Results---------------------\n", res)
+        print("[INFO]----------------------------Total Count------", len(res))
+    elif mode == "-rtf-idf":
         res = retrieve_documents_by_rank(files, query, spliting_words, N, l_avg, verbose, mode)
-        print("[INFO]----Results------", res)
-        print("[INFO]----Total Count------", len(res))
+        print("[INFO]----------------------------ALL Retrieved Results---------------------\n", res)
+        print("[INFO]----------------------------Total Count------", len(res))
+    elif mode == "-compare" and top > 0:
+        res = retrieve_documents_by_rank(files, query, spliting_words, N, l_avg, verbose, "-rbm25")[0: top]
+        print(
+            "[INFO]----------------------------Top " + top + " Retrieved Results by BM25 Ranking---------------------\n",
+            res)
+        print("[INFO]----------------------------Total Count------", len(res))
+
+        res = retrieve_documents_by_rank(files, query, spliting_words, N, l_avg, verbose, "-rtf-idf")[0: top]
+        print(
+            "[INFO]----------------------------Top " + top + " Retrieved Results by tf-idf Ranking---------------------\n",
+            res)
+        print("[INFO]----------------------------Total Count------", len(res))
+
     else:
-        print("[ERROR] missing mode ['-rbm'|'-rtf']")
+        print("[ERROR] missing mode ['-rbm25'|'-rtf']")
         help()

@@ -15,6 +15,10 @@ BLOCK_FILE_PATH_REGEX = "./ConcordiaResearchBlocks/*.txt"
 INDEX_FILE_PATH_TEMPLATE = "./ConcordiaResearchIndex/index{}.txt"
 BLOCK_FILE_PATH_TEMPLATE = "./ConcordiaResearchBlocks/block{}.txt"
 
+# BLOCK_FILE_PATH_REGEX = "./AIindexBlocks/*.txt"
+# INDEX_FILE_PATH_TEMPLATE = "./AIindexIndex/index{}.txt"
+# BLOCK_FILE_PATH_TEMPLATE = "./AIindexBlocks/block{}.txt"
+
 INDEX_FILE_SIZE = 250000
 MEMORY_CAPACITY = 50000000000
 
@@ -117,7 +121,7 @@ def read_line_from_block(block_file_obj, block_number):
 def merge_blocks(block_files):
     global ending_words
 
-    f_term_df = open("./term_df.txt", "w")
+    f_term_df = open("./AIindex_term_df.txt", "w")
 
     def sorted_as_int(nums):
         nums = [num for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
@@ -165,7 +169,7 @@ def merge_blocks(block_files):
         count += 1
         f.write(str(token) + "@@@@@" + "#####".join(p) + "\n")
 
-        f_term_df.write(str(token) + " = " + str(len(p)) + "\n")
+        f_term_df.write(str(token) + "=" + str(len(p)) + "\n")
 
         if count == INDEX_FILE_SIZE:
             ending_words.append(token)
