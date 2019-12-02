@@ -16,7 +16,7 @@ INDEX_FILE_PATH_TEMPLATE = "./ConcordiaResearchIndex/index{}.txt"
 BLOCK_FILE_PATH_TEMPLATE = "./ConcordiaResearchBlocks/block{}.txt"
 
 INDEX_FILE_SIZE = 250000
-MEMORY_CAPACITY = 5000
+MEMORY_CAPACITY = 50000000000
 
 '''
 parse a single file to return a list of documents at the level of PARSE_KEY
@@ -29,12 +29,12 @@ def parse_file(file_directory):
     f.close()
     soup = BeautifulSoup(data, features="html.parser")
     [x.extract() for x in soup.findAll('script')]
+    [x.extract() for x in soup.findAll('noscript')]
     try:
         document = soup.findAll(DOCUMENT_PARSE_KEY)[0].body.text
         return document
     except IndexError:
         return None
-
 
 
 def generate_tokens_pipeline(text):
@@ -69,10 +69,10 @@ def clean_source(url, document, total_document_length):
         single_doc.append(tokens)
     else:
         single_doc.append("")
-    return single_doc, total_document_length
+    return single_doc, total_document_length #[url, [token1, token2...]]
 
 
-def build_inverted_index_in_memory(inverted_index, single_doc):
+def build_inverted_index_in_memory(inverted_index, single_doc): #[url, [token1, token2...]]
     counter = collections.Counter(single_doc[1])
     for token in counter.keys():
         if inverted_index.get(token, None) is not None:
@@ -100,22 +100,24 @@ def build_inverted_index_in_memory(inverted_index, single_doc):
 
 
 def persist_memory_data(inverted_index, f_name):
-    f = open(f_name, "w")
+    f_index = open(f_name, "w")
     for key in sorted(inverted_index.keys()):
-        f.write(key + "=" + " ".join(
+        f_index.write(key + "@@@@@" + "#####".join(
             sorted(inverted_index.get(key), key=lambda combo: combo.split("~")[0])) + "\n")
-    f.close()
+    f_index.close()
 
 
 def read_line_from_block(block_file_obj, block_number):
     top_line = block_file_obj.readline()
-    key_values_pair = top_line.rstrip("\n").split("=")
+    key_values_pair = top_line.rstrip("\n").split("@@@@@")
     return [key_values_pair[0],
-            [block_number, key_values_pair[1].split(" ")]]  # [url, [block_number, [combo1, combo2, combo3....]]]
+            [block_number, key_values_pair[1].split("#####")]]  # [url, [block_number, [combo1, combo2, combo3....]]]
 
 
 def merge_blocks(block_files):
     global ending_words
+
+    f_term_df = open("./term_df.txt", "w")
 
     def sorted_as_int(nums):
         nums = [num for num in nums if len(re.findall(r"\d+", num.rstrip("\n"))) > 0]
@@ -161,7 +163,10 @@ def merge_blocks(block_files):
 
         non_positional_postings_size += len(p)
         count += 1
-        f.write(str(token) + "=" + " ".join(p) + "\n")
+        f.write(str(token) + "@@@@@" + "#####".join(p) + "\n")
+
+        f_term_df.write(str(token) + " = " + str(len(p)) + "\n")
+
         if count == INDEX_FILE_SIZE:
             ending_words.append(token)
             f.close()
@@ -183,6 +188,7 @@ def merge_blocks(block_files):
                 else:
                     lines[line[0]] = [line[1]]
     f.close()
+    f_term_df.close()
     return int(output_file_count * INDEX_FILE_SIZE + count), non_positional_postings_size
 
 
@@ -206,9 +212,9 @@ if __name__ == "__main__":
         counter += 1
         if counter == MEMORY_CAPACITY:
             counter = 0
+            persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
             inverted_index_dictionary = {}
             block_number += 1
-        persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
     persist_memory_data(inverted_index_dictionary, BLOCK_FILE_PATH_TEMPLATE.format(str(block_number)))
 
     print("[INFO] SPIMI generating block files ends")

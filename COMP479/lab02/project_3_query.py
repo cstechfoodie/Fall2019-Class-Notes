@@ -1,4 +1,3 @@
-import collections
 import glob
 import sys
 from project_1 import generate_tokens_pipeline
@@ -26,7 +25,7 @@ def find_file_index(spliting_words, term):
     return len(spliting_words)
 
 
-def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l_avg, verbose=False, mode="rbm"):
+def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l_avg, verbose=False, mode="-rbm"):
     res = []
     if len(words) == 0:
         return res
@@ -35,12 +34,12 @@ def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l
     f = open(index_files[file_index], "r")
     line = f.readline().strip("\n")
     while line:
-        if line.split("=")[0] == a:
-            res.append(line.rstrip("\n").split("=")[1].split(" "))
+        if line.split("@@@@@")[0] == a:
+            res.append(line.rstrip("\n").split("@@@@@")[1].split("#####"))
             if verbose:
                 print("index: 0", line)
             break
-        elif line.split("=")[0] > a:
+        elif line.split("@@@@@")[0] > a:
             break
         else:
             line = f.readline().strip("\n")
@@ -50,12 +49,12 @@ def retrieve_documents_by_rank(index_files: str, words: list, splits: list, N, l
         b = words[i]
         line = f.readline().strip("\n")
         while line:
-            if line.split("=")[0] == b:
-                b_posting = line.rstrip("\n").split("=")[1].split(" ")
+            if line.split("@@@@@")[0] == b:
+                b_posting = line.rstrip("\n").split("@@@@@")[1].split("#####")
                 if verbose:
                     print("index:", i, line)
                 break
-            elif line.split("=")[0] > b:
+            elif line.split("@@@@@")[0] > b:
                 break
             else:
                 line = f.readline().strip("\n")
@@ -94,13 +93,13 @@ def calculate_score_tf_idf(tf, N, df):
            )
 
 
-def rank_documents(postings, N, l_avg, verbose, mode):  # [['3978~337~1'], ['14342~229~1']]
+def rank_documents(postings, N, l_avg, verbose, mode):  # [['url~337~1'], ['url~229~1']]
     res = {}
-    for posting in postings:  # ['3978~337~1', '3978~337~1']
-        for combo in posting:  # '3978~337~1'
-            url, ld, tf = [x for x in combo.strip("\n").split("~")]
+    for posting in postings:  # ['url~337~1', 'url~337~1']
+        for combo in posting:  # 'url~337~1'
+            url, ld, tf = [x for x in combo.strip("\n").split("~")] # [url, 337, 1]
             ld = int(ld)
-            tf = len(tf)
+            tf = int(tf)
             df = len(posting)
             if mode == "-rbm":
                 score = calculate_score_bm25(ld, tf, N, df, l_avg)
